@@ -1,5 +1,7 @@
 let ctx;
 
+const tileSize = 32;
+
 function main() {
 
   const canvas = document.getElementById('game');
@@ -7,6 +9,7 @@ function main() {
   canvas.height = window.innerHeight;
 
   ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
 
   const observer = new ResizeObserver((entries) => {
     canvas.width  = window.innerWidth;
@@ -24,9 +27,9 @@ function main() {
 }
 
 const width = 200;
-const height = 100;
+const height = 200;
 
-const map = range(height, () => range(width, () => rand(0,100)));
+const map = range(height, () => range(width, () => chance(3) ? rand(0,200): 0));
 
 function render() {
 
@@ -63,11 +66,12 @@ function draw(ctx) {
 function drawCell(ctx, x, y, cell) {
 
   ctx.save();
-  ctx.translate(x*16, y*16);
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(x*tileSize, y*tileSize);
   ctx.drawImage(
     tiles,
     0, cell * 16, 16, 16,
-    0, 0, 16, 16
+    0, 0, tileSize, tileSize,
   );
   ctx.restore();
 
@@ -100,6 +104,16 @@ tiles.src = 'images/png/tiles.png';
 export function rand(min, max) {
 
   return Math.floor((Math.random()*(max-min))+min);
+
+}
+
+/**
+ * @param {number} max
+ * @returns {boolean}
+ */
+export function chance(max) {
+
+  return rand(0, max)===0;
 
 }
 
