@@ -27,9 +27,9 @@ function main() {
   });
   observer.observe(canvas)
 
-  window.addEventListener('mousedown', canvasMouseDown);
-  window.addEventListener('mouseup', canvasMouseUp);
-  canvas.addEventListener('mousemove', canvasMouseMove);
+  window.addEventListener('pointerdown', canvasMouseDown);
+  window.addEventListener('pointerup', canvasMouseUp);
+  canvas.addEventListener('pointermove', canvasMouseMove);
 
   render();
 
@@ -110,7 +110,7 @@ function canvasMouseUp() {
  */
 function canvasMouseMove(ev) {
 
-  if (!mouseDown || ev.button!=0) return;
+  if (!mouseDown) return;
 
   let xDiff = ev.x - lastMouseXY[0];
   let yDiff = ev.y - lastMouseXY[1];
