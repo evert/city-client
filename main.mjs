@@ -1,10 +1,29 @@
 // @ts-check
 let ctx;
 
+/**
+ * How big each map tile is in pixels
+ */
 const tileSize = 32;
 
+/**
+ * Total size of the canvas. This changes with resizes.
+ */
 let canvasDimensions = [window.innerWidth, window.innerHeight];
-let tileDimensions = [Math.ceil(window.innerWidth/tileSize), Math.ceil(window.innerHeight/tileSize)];
+
+/**
+ * The size of the canvas as measured in tiles.
+ */
+let tileDimensions = [
+  Math.ceil(window.innerWidth/tileSize),
+  Math.ceil(window.innerHeight/tileSize)
+];
+
+/**
+ * The x and y offset of how far the user has scrolled.
+ *
+ * This is measured in pixels, not tiles.
+ */
 let viewportOffset = [0,0];
 
 function main() {
