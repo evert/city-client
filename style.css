@@ -5,6 +5,7 @@ html, body {
   padding: 0;
   overflow: none;
   touch-action: none;
+  position: fixed;
 }
 
 canvas {
