@@ -1,10 +1,15 @@
+// @ts-check
 let ctx;
 
 const tileSize = 32;
 
+let canvasDimensions = [window.innerWidth, window.innerHeight];
+let tileDimensions = [Math.ceil(window.innerWidth/tileSize), Math.ceil(window.innerHeight/tileSize)];
+let viewportOffset = [0,0];
+
 function main() {
 
-  const canvas = document.getElementById('game');
+  const canvas = /** @type HTMLCanvasElement */ (document.getElementById('game'));
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -14,20 +19,24 @@ function main() {
   const observer = new ResizeObserver((entries) => {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
+    canvasDimensions = [window.innerWidth, window.innerHeight];
+    tileDimensions = [
+      Math.ceil(window.innerWidth/tileSize),
+      Math.ceil(window.innerHeight/tileSize)
+    ];
   });
   observer.observe(canvas)
 
-  render();
+  window.addEventListener('mousedown', canvasMouseDown);
+  window.addEventListener('mouseup', canvasMouseUp);
+  canvas.addEventListener('mousemove', canvasMouseMove);
 
-  window.addEventListener('resize', () => {
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-  });
+  render();
 
 }
 
-const width = 200;
-const height = 200;
+const width = 1000;
+const height = 1000;
 
 const map = range(height, () => range(width, () => chance(3) ? rand(0,200): 0));
 
@@ -45,11 +54,21 @@ function render() {
  */
 function draw(ctx) {
 
-  for(let y=0; y<height; y++) {
+  for(let y=-1; y<tileDimensions[1]+1; y++) {
 
-    for(let x=0; x<width; x++) {
+    for(let x=-1; x<tileDimensions[0]+1; x++) {
 
-      drawCell(ctx, x, y, map[y][x]);
+      const cellX = Math.floor(viewportOffset[0]/tileSize + x);
+      const cellY = Math.floor(viewportOffset[1]/tileSize + y);
+      if (map[cellY]?.[cellX] === undefined) continue;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(
+         (x*tileSize) - (viewportOffset[0] % tileSize),
+         (y*tileSize) - (viewportOffset[1] % tileSize)
+      );
+      drawCell(ctx, map[cellY][cellX]);
+      ctx.restore();
 
     }
 
@@ -59,25 +78,59 @@ function draw(ctx) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {number} x
- * @param {number} y
  * @param {number} cell
  */
-function drawCell(ctx, x, y, cell) {
+function drawCell(ctx, cell) {
 
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.translate(x*tileSize, y*tileSize);
   ctx.drawImage(
     tiles,
     0, cell * 16, 16, 16,
     0, 0, tileSize, tileSize,
   );
-  ctx.restore();
 
 }
 
+let mouseDown = false;
+let lastMouseXY = [0,0];
+let lastViewportOffset = [0,0];
+/**
+ * @param {MouseEvent} ev
+ */
+function canvasMouseDown(ev) {
+  mouseDown = true;
+  lastMouseXY = [ev.x, ev.y];
+  lastViewportOffset = [...viewportOffset];
+}
+function canvasMouseUp() {
+  mouseDown = false;
+}
 
+/**
+ * @param {MouseEvent} ev
+ */
+function canvasMouseMove(ev) {
+
+  if (!mouseDown || ev.button!=0) return;
+  console.log(ev.button);
+
+  let xDiff = ev.x - lastMouseXY[0];
+  let yDiff = ev.y - lastMouseXY[1];
+
+  viewportOffset = [
+    Math.max(0, lastViewportOffset[0] - xDiff),
+    Math.max(0, lastViewportOffset[1] - yDiff),
+  ];
+}
+
+
+/**
+ * Creates an array of length num, and fills it with the result
+ * of the callback.
+ *
+ * @param {number} num
+ * @param {(idx: number) => any} valueCb
+ * @returns {any[]}
+ */
 function range(num, valueCb) {
 
   const r = [];
