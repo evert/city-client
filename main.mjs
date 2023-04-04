@@ -111,7 +111,6 @@ function canvasMouseUp() {
 function canvasMouseMove(ev) {
 
   if (!mouseDown || ev.button!=0) return;
-  console.log(ev.button);
 
   let xDiff = ev.x - lastMouseXY[0];
   let yDiff = ev.y - lastMouseXY[1];
