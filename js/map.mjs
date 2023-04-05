@@ -61,7 +61,6 @@ export class MapData {
     const body = await result.json();
 
     this.chunks.set(x+','+y, body.tiles)
-    console.log('got chunk');
     this.onNewDataCb();
 
   }

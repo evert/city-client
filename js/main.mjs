@@ -44,6 +44,10 @@ tiles.src = 'images/png/tiles.png';
 
 // toronto
 let viewportOffset = [36232*tileSize-Math.floor(canvasDimensions[0]/2),16688*tileSize-Math.floor(canvasDimensions[1]/2)];
+const parts = document.location.hash.match(/^#([0-9]+),([0-9]+)$/);
+if (parts) {
+  viewportOffset = [+parts[1],+parts[2]];
+}
 
 // netherlands
 // let viewportOffset = [66239,13678].map( i => i*tileSize);
@@ -118,6 +122,15 @@ function draw(ctx) {
 
 }
 
+const cellColors = new Map([
+  [0, '#cc7f66'],
+  [3, '#6666e6'],
+  [4, '#6666e6'],
+  [244, '#660000'],
+  [37, '#007f00'],
+  [41, '#00e600'],
+  [42, '#00e600'],
+]);;
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -125,11 +138,16 @@ function draw(ctx) {
  */
 function drawCell(ctx, cell) {
 
-  ctx.drawImage(
-    tiles,
-    0, cell * 16, 16, 16,
-    0, 0, tileSize, tileSize,
-  );
+  if (tileSize > 4) {
+    ctx.drawImage(
+      tiles,
+      0, cell * 16, 16, 16,
+      0, 0, tileSize, tileSize,
+    );
+  } else {
+    ctx.fillStyle = cellColors.get(cell) ?? '#000000';
+    ctx.fillRect(0,0,tileSize,tileSize);
+  }
 
 }
 
@@ -162,6 +180,7 @@ function canvasMouseMove(ev) {
     Math.max(0, lastViewportOffset[0] - xDiff),
     Math.max(0, lastViewportOffset[1] - yDiff),
   ];
+  window.history.replaceState(null, '', '#' + viewportOffset.join(','));
   requestDraw();
 }
 
@@ -206,7 +225,7 @@ function setTileCenter(x, y) {
     x * tileSize - Math.floor(canvasDimensions[0] / 2),
     y * tileSize - Math.floor(canvasDimensions[1] / 2),
   ];
-  console.log(viewportOffset);
+  window.history.replaceState(null, '', '#' + viewportOffset.join(','));
 }
 
 /**
@@ -247,17 +266,21 @@ let zoomDelay = false;
  * @param {WheelEvent} ev
  */
 function wheel(ev) {
+  
+  if (zoomDelay) return;
 
+  zoomDelay = true;
   const center = getTileCenter();
   if (ev.deltaY<0) {
     // Zoom in
     tileSize = Math.min(64,tileSize+1);
   } else if (ev.deltaY > 0) {
-    tileSize = Math.max(4,tileSize-1);
+    tileSize = Math.max(1,tileSize-1);
   }
   updateViewPort();
   setTileCenter(...center);
   requestDraw();
+  setTimeout(() => zoomDelay = false, 10);
 }
 
 function updateViewPort() {
