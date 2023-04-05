@@ -10,7 +10,7 @@ let ctx;
 /**
  * How big each map tile is in pixels
  */
-let tileSize = 16;
+let tileSize = 8;
 
 /**
  * Total size of the canvas. This changes with resizes.
@@ -33,8 +33,12 @@ let tileDimensions = [
 //let viewportOffset = [2576192,1951424];
 //let viewportOffset = [1158944,534176]
 //let viewportOffset = [rand(0,129600*tileSize), rand(0,64800*tileSize)];
-let viewportOffset = [36232*tileSize+10000,16688*tileSize+10000];
 
+// toronto
+// let viewportOffset = [36232*tileSize+10000,16688*tileSize+10000];
+
+// netherlands
+let viewportOffset = [66239,13678].map( i => i*tileSize);
 
 function main() {
 
@@ -53,6 +57,7 @@ function main() {
       Math.ceil(window.innerWidth/tileSize),
       Math.ceil(window.innerHeight/tileSize)
     ];
+    requestDraw();
   });
   observer.observe(canvas)
 
@@ -60,22 +65,24 @@ function main() {
   window.addEventListener('pointerup', canvasMouseUp);
   canvas.addEventListener('pointermove', canvasMouseMove);
 
-  render();
+  requestDraw();
 
 }
 
 const width = 1000;
 const height = 1000;
 
-const map = new MapData();
+const map = new MapData(() => requestDraw());
 
-function render() {
-
-  window.requestAnimationFrame( () => {
+let rafKey = null;
+function requestDraw() {
+  console.log('draw requested');
+  if (rafKey) return;
+  rafKey = requestAnimationFrame(() => {
+    console.log('draw');
+    rafKey = null;
     draw(ctx);
-    render();
   });
-
 }
 
 /**
@@ -148,6 +155,7 @@ function canvasMouseMove(ev) {
     Math.max(0, lastViewportOffset[0] - xDiff),
     Math.max(0, lastViewportOffset[1] - yDiff),
   ];
+  requestDraw();
 }
 
 const tiles = new Image();

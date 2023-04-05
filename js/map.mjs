@@ -4,7 +4,8 @@ const chunkSize = 1000;
 
 export class MapData { 
 
-  constructor() {
+  constructor(onNewDataCb) {
+    this.onNewDataCb = onNewDataCb;
     this.chunks = new Map();
   }
   
@@ -59,7 +60,9 @@ export class MapData {
     const result = await fetch(`http://localhost:8500/map?${params.toString()}`);
     const body = await result.json();
 
-    this.chunks.set(x+','+y, body.tiles);
+    this.chunks.set(x+','+y, body.tiles)
+    console.log('got chunk');
+    this.onNewDataCb();
 
   }
 
