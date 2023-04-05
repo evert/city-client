@@ -57,7 +57,7 @@ export class MapData {
       width: chunkSize.toString(),
       height: chunkSize.toString(),
     });
-    const result = await fetch(`http://localhost:8500/map?${params.toString()}`);
+    const result = await fetch(`/map?${params.toString()}`);
     const body = await result.json();
 
     this.chunks.set(x+','+y, body.tiles)

@@ -10,7 +10,12 @@ let ctx;
 /**
  * How big each map tile is in pixels
  */
-let tileSize = 8;
+let tileSize = 16;
+
+/**
+ * @type {HTMLCanvasElement}
+ */
+let canvas;
 
 /**
  * Total size of the canvas. This changes with resizes.
@@ -25,6 +30,9 @@ let tileDimensions = [
   Math.ceil(window.innerHeight/tileSize)
 ];
 
+const tiles = new Image();
+tiles.src = 'images/png/tiles.png';
+
 /**
  * The x and y offset of how far the user has scrolled.
  *
@@ -35,14 +43,14 @@ let tileDimensions = [
 //let viewportOffset = [rand(0,129600*tileSize), rand(0,64800*tileSize)];
 
 // toronto
-// let viewportOffset = [36232*tileSize+10000,16688*tileSize+10000];
+let viewportOffset = [36232*tileSize-Math.floor(canvasDimensions[0]/2),16688*tileSize-Math.floor(canvasDimensions[1]/2)];
 
 // netherlands
-let viewportOffset = [66239,13678].map( i => i*tileSize);
+// let viewportOffset = [66239,13678].map( i => i*tileSize);
 
 function main() {
 
-  const canvas = /** @type HTMLCanvasElement */ (document.getElementById('game'));
+  canvas = /** @type HTMLCanvasElement */ (document.getElementById('game'));
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -50,13 +58,7 @@ function main() {
   ctx.imageSmoothingEnabled = false;
 
   const observer = new ResizeObserver((entries) => {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvasDimensions = [window.innerWidth, window.innerHeight];
-    tileDimensions = [
-      Math.ceil(window.innerWidth/tileSize),
-      Math.ceil(window.innerHeight/tileSize)
-    ];
+    updateViewPort();
     requestDraw();
   });
   observer.observe(canvas)
@@ -65,9 +67,15 @@ function main() {
   window.addEventListener('pointerup', canvasMouseUp);
   canvas.addEventListener('pointermove', canvasMouseMove);
 
+  window.addEventListener('wheel', wheel);
+
+  const search = document.getElementById('search');
+  search.addEventListener('keyup', searchChange);
+
   requestDraw();
 
 }
+document.addEventListener('DOMContentLoaded', main);
 
 const width = 1000;
 const height = 1000;
@@ -76,10 +84,8 @@ const map = new MapData(() => requestDraw());
 
 let rafKey = null;
 function requestDraw() {
-  console.log('draw requested');
   if (rafKey) return;
   rafKey = requestAnimationFrame(() => {
-    console.log('draw');
     rafKey = null;
     draw(ctx);
   });
@@ -111,6 +117,7 @@ function draw(ctx) {
   }
 
 }
+
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -158,7 +165,107 @@ function canvasMouseMove(ev) {
   requestDraw();
 }
 
-const tiles = new Image();
-tiles.src = 'images/png/tiles.png';
+/**
+ * @param {number} lat
+ * @param {number} lng
+ */
+async function gotoGps(lat, lng) {
 
-document.addEventListener('DOMContentLoaded', main);
+  const params = new URLSearchParams({
+    lat: lat.toString(),
+    lng: lng.toString(),
+  });
+  const res = await fetch('/gps-to-tile?' + params.toString());
+  const body = await res.json();
+
+  setTileCenter(
+    body.x,
+    body.y,
+  );
+  requestDraw();
+
+}
+
+/**
+ * @returns {[number, number]}
+ */
+function getTileCenter() {
+  return [
+    Math.round((viewportOffset[0] + canvasDimensions[0]/2) / tileSize),
+    Math.round((viewportOffset[1] + canvasDimensions[1]/2) / tileSize),
+  ];
+
+}
+
+/**
+ * @param {number} x
+ * @param {number} y
+ */
+function setTileCenter(x, y) {
+  viewportOffset = [
+    x * tileSize - Math.floor(canvasDimensions[0] / 2),
+    y * tileSize - Math.floor(canvasDimensions[1] / 2),
+  ];
+  console.log(viewportOffset);
+}
+
+/**
+ * @type {null|ReturnType<setTimeout>}
+ */
+let searchDelay = null;
+
+/**
+ * @param {Event} ev
+ */
+function searchChange(ev) {
+
+  const newValue = /** @type {any} */ (ev.target).value;
+  if (searchDelay) {
+    clearTimeout(searchDelay);
+  }
+  searchDelay = setTimeout(async() => {
+    const params = new URLSearchParams({
+      q: newValue,
+      limit: '1',
+      format: 'json',
+    });
+    const resp = await fetch('https://nominatim.openstreetmap.org/search?' + params.toString());
+    const body = await resp.json();
+    if (body.length>0) {
+      gotoGps(body[0].lat, body[0].lon);
+    }
+  },1000);
+
+}
+
+/**
+ * If true we prevent zooming
+ */
+let zoomDelay = false;
+
+/**
+ * @param {WheelEvent} ev
+ */
+function wheel(ev) {
+
+  const center = getTileCenter();
+  if (ev.deltaY<0) {
+    // Zoom in
+    tileSize = Math.min(64,tileSize+1);
+  } else if (ev.deltaY > 0) {
+    tileSize = Math.max(4,tileSize-1);
+  }
+  updateViewPort();
+  setTileCenter(...center);
+  requestDraw();
+}
+
+function updateViewPort() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvasDimensions = [window.innerWidth, window.innerHeight];
+  tileDimensions = [
+    Math.ceil(window.innerWidth/tileSize),
+    Math.ceil(window.innerHeight/tileSize)
+  ];
+}
