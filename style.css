@@ -4,7 +4,12 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: none;
-  touch-action: none;
+  
+  /**
+   * This will ensure that mobile browsers don't hide the address
+   * bar. We want this, because if they do, they take over the
+   * pointermove event for vertical moves.
+   */
   position: fixed;
 }
 

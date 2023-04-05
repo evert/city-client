@@ -1,10 +1,16 @@
 // @ts-check
+import { chance, rand, range } from './util.mjs';
+import { MapData } from './map.mjs';
+
+/**
+ * @type {CanvasRenderingContext2D}
+ */
 let ctx;
 
 /**
  * How big each map tile is in pixels
  */
-const tileSize = 32;
+let tileSize = 16;
 
 /**
  * Total size of the canvas. This changes with resizes.
@@ -24,7 +30,11 @@ let tileDimensions = [
  *
  * This is measured in pixels, not tiles.
  */
-let viewportOffset = [0,0];
+//let viewportOffset = [2576192,1951424];
+//let viewportOffset = [1158944,534176]
+//let viewportOffset = [rand(0,129600*tileSize), rand(0,64800*tileSize)];
+let viewportOffset = [36232*tileSize+10000,16688*tileSize+10000];
+
 
 function main() {
 
@@ -57,7 +67,7 @@ function main() {
 const width = 1000;
 const height = 1000;
 
-const map = range(height, () => range(width, () => chance(3) ? rand(0,200): 0));
+const map = new MapData();
 
 function render() {
 
@@ -79,14 +89,14 @@ function draw(ctx) {
 
       const cellX = Math.floor(viewportOffset[0]/tileSize + x);
       const cellY = Math.floor(viewportOffset[1]/tileSize + y);
-      if (map[cellY]?.[cellX] === undefined) continue;
+      if (map.get(cellX, cellY) === undefined) continue;
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       ctx.translate(
          (x*tileSize) - (viewportOffset[0] % tileSize),
          (y*tileSize) - (viewportOffset[1] % tileSize)
       );
-      drawCell(ctx, map[cellY][cellX]);
+      drawCell(ctx, map.get(cellX, cellY));
       ctx.restore();
 
     }
@@ -140,53 +150,7 @@ function canvasMouseMove(ev) {
   ];
 }
 
-
-/**
- * Creates an array of length num, and fills it with the result
- * of the callback.
- *
- * @param {number} num
- * @param {(idx: number) => any} valueCb
- * @returns {any[]}
- */
-function range(num, valueCb) {
-
-  const r = [];
-  for (let i=0; i<num; i++) {
-
-    if (typeof valueCb === 'function') {
-      r.push(valueCb(i));
-    } else {
-      r.push(valueCb);
-    }
-  }
-  return r;
-
-}
-
 const tiles = new Image();
 tiles.src = 'images/png/tiles.png';
-
-/**
- * @param {number} min Lower boundary (inclusive)
- * @param {number} max Upper boundary (exclusive)
- * @returns {number}
- */
-export function rand(min, max) {
-
-  return Math.floor((Math.random()*(max-min))+min);
-
-}
-
-/**
- * @param {number} max
- * @returns {boolean}
- */
-export function chance(max) {
-
-  return rand(0, max)===0;
-
-}
-
 
 document.addEventListener('DOMContentLoaded', main);
