@@ -1,5 +1,6 @@
 // @ts-check
 import { chance, rand, range } from './util.mjs';
+
 import { MapData } from './map.mjs';
 
 /**
@@ -113,7 +114,15 @@ function draw(ctx) {
          (x*tileSize) - (viewportOffset[0] % tileSize),
          (y*tileSize) - (viewportOffset[1] % tileSize)
       );
-      drawCell(ctx, map.get(cellX, cellY));
+      if (map.get(cellX, cellY) === 0 && map.get(cellX, cellY + 1) === 3 && map.get(cellX - 1, cellY) === 3) {
+        drawCell(ctx, 8);
+      } else if (map.get(cellX, cellY) === 0 && map.get(cellX, cellY + 1) === 3 && map.get(cellX + 1, cellY) === 3) {
+        drawCell(ctx, 20);
+      } else if (map.get(cellX, cellY - 1) === 0 && map.get(cellX, cellY) === 3 && map.get(cellX + 1, cellY - 1) !== 3 && map.get(cellX - 1, cellY - 1) !== 3) {
+        drawCell(ctx, 5);
+      } else {
+        drawCell(ctx, map.get(cellX, cellY));
+      }
       ctx.restore();
 
     }
